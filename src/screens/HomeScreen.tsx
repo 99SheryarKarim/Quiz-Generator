@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Modal,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CreateQuestion from '../components/CreateQuestion';
@@ -17,6 +19,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 const HomeScreen: React.FC = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [quizHistory, setQuizHistory] = useState<QuizHistory[]>([]);
+  const [showScoreModal, setShowScoreModal] = useState(false);
+  const [lastQuizScore, setLastQuizScore] = useState<QuizHistory | null>(null);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [scaleAnim] = useState(new Animated.Value(0.8));
 
   const handleQuestionAccepted = (question: TriviaQuestion) => {
     const topic = question.category;
@@ -36,6 +42,101 @@ const HomeScreen: React.FC = () => {
     };
 
     setQuizHistory(prev => [newQuizHistory, ...prev].slice(0, 10));
+    setLastQuizScore(newQuizHistory);
+    setShowScoreModal(true);
+
+    // Start animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      })
+    ]).start();
+  };
+
+  const renderScoreModal = () => {
+    if (!lastQuizScore) return null;
+
+    const percentage = Math.round((lastQuizScore.score / lastQuizScore.totalQuestions) * 100);
+    let message = '';
+    let icon = '';
+
+    if (percentage >= 80) {
+      message = 'Outstanding Performance!';
+      icon = 'trophy';
+    } else if (percentage >= 60) {
+      message = 'Great Job!';
+      icon = 'star';
+    } else {
+      message = 'Keep Practicing!';
+      icon = 'school';
+    }
+
+    return (
+      <Modal
+        visible={showScoreModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowScoreModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <Animated.View 
+            style={[
+              styles.modalContent,
+              { 
+                opacity: fadeAnim,
+                transform: [{ scale: scaleAnim }]
+              }
+            ]}
+          >
+            <LinearGradient
+              colors={['#8A2BE2', '#4B0082']}
+              style={styles.modalHeader}
+            >
+              <Ionicons name={icon} size={60} color="#FFFFFF" style={styles.headerIcon} />
+              <Text style={styles.modalTitle}>Quiz Complete!</Text>
+            </LinearGradient>
+            
+            <View style={styles.scoreContainer}>
+              <Text style={styles.welcomeText}>Welcome Back, Quiz Master!</Text>
+              <Text style={styles.scoreText}>Your Amazing Score</Text>
+              <View style={styles.scoreCircle}>
+                <Text style={styles.scoreValue}>{lastQuizScore.score}</Text>
+                <Text style={styles.scoreDivider}>/</Text>
+                <Text style={styles.totalQuestions}>{lastQuizScore.totalQuestions}</Text>
+              </View>
+              <Text style={styles.percentageText}>{percentage}%</Text>
+              <Text style={styles.messageText}>{message}</Text>
+              
+              <View style={styles.statsContainer}>
+                <View style={styles.statItem}>
+                  <Ionicons name="checkmark-circle" size={24} color="#8A2BE2" />
+                  <Text style={styles.statText}>Correct: {lastQuizScore.score}</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Ionicons name="close-circle" size={24} color="#8A2BE2" />
+                  <Text style={styles.statText}>Incorrect: {lastQuizScore.totalQuestions - lastQuizScore.score}</Text>
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowScoreModal(false)}
+            >
+              <Text style={styles.closeButtonText}>Continue</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
+    );
   };
 
   return (
@@ -43,100 +144,21 @@ const HomeScreen: React.FC = () => {
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <LinearGradient
-            colors={['#4A90E2', '#357ABD']}
+            colors={['#8A2BE2', '#4B0082']}
             style={styles.headerGradient}
           >
-            <Text style={styles.title}>Thadda Quiz Generator</Text>
-            <Text style={styles.subtitle}>Create engaging quizzes with AI</Text>
+            <Text style={styles.headerTitle}>Quiz Generator</Text>
+            <Text style={styles.headerSubtitle}>Test your knowledge!</Text>
           </LinearGradient>
         </View>
 
-        <View style={styles.content}>
-          <CreateQuestion 
-            onQuestionAccepted={handleQuestionAccepted}
-            onQuizComplete={handleQuizComplete}
-          />
-        </View>
+        <CreateQuestion
+          onQuestionAccepted={handleQuestionAccepted}
+          onQuizComplete={handleQuizComplete}
+          onClose={() => {}}
+        />
 
-        {recentSearches.length > 0 && (
-          <View style={styles.recentSearches}>
-            <Text style={styles.sectionTitle}>Recent Topics</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {recentSearches.map((topic, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.topicChip}
-                  onPress={() => handleQuestionAccepted({ category: topic } as TriviaQuestion)}
-                >
-                  <Text style={styles.topicText}>{topic}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {quizHistory.length > 0 && (
-          <View style={styles.quizHistory}>
-            <Text style={styles.sectionTitle}>Recent Quizzes</Text>
-            {quizHistory.map((quiz, index) => (
-              <View key={index} style={styles.quizCard}>
-                <View style={styles.quizHeader}>
-                  <Text style={styles.quizTopic}>{quiz.topic}</Text>
-                  <Text style={styles.quizDate}>
-                    {new Date(quiz.timestamp).toLocaleDateString()}
-                  </Text>
-                </View>
-                <View style={styles.quizDetails}>
-                  <Text style={styles.quizScore}>
-                    Score: {quiz.score}/{quiz.totalQuestions}
-                  </Text>
-                  <Text style={styles.quizPercentage}>
-                    {Math.round((quiz.score / quiz.totalQuestions) * 100)}%
-                  </Text>
-                </View>
-                <View style={styles.quizMeta}>
-                  <Text style={styles.quizMetaText}>
-                    {quiz.difficulty.charAt(0).toUpperCase() + quiz.difficulty.slice(1)} • {quiz.type}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        <View style={styles.featuresSection}>
-          <Text style={styles.sectionTitle}>Features</Text>
-          <View style={styles.featureGrid}>
-            <View style={styles.featureCard}>
-              <Ionicons name="bulb-outline" size={32} color="#007AFF" />
-              <Text style={styles.featureTitle}>AI-Powered</Text>
-              <Text style={styles.featureDescription}>
-                Generate questions using advanced AI technology
-              </Text>
-            </View>
-            <View style={styles.featureCard}>
-              <Ionicons name="options-outline" size={32} color="#007AFF" />
-              <Text style={styles.featureTitle}>Customizable</Text>
-              <Text style={styles.featureDescription}>
-                Choose difficulty and question types
-              </Text>
-            </View>
-            <View style={styles.featureCard}>
-              <Ionicons name="trophy-outline" size={32} color="#007AFF" />
-              <Text style={styles.featureTitle}>Track Progress</Text>
-              <Text style={styles.featureDescription}>
-                Monitor your quiz performance
-              </Text>
-            </View>
-            <View style={styles.featureCard}>
-              <Ionicons name="share-outline" size={32} color="#007AFF" />
-              <Text style={styles.featureTitle}>Share</Text>
-              <Text style={styles.featureDescription}>
-                Share quizzes with friends
-              </Text>
-            </View>
-          </View>
-        </View>
+        {renderScoreModal()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -145,142 +167,138 @@ const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#fff',
   },
   scrollView: {
     flex: 1,
   },
   header: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    marginBottom: 20,
   },
   headerGradient: {
     padding: 20,
-    paddingBottom: 30,
+    paddingTop: Platform.OS === 'ios' ? 40 : 20,
   },
-  title: {
+  headerTitle: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textAlign: 'center',
   },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
+  headerSubtitle: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginTop: 5,
   },
-  content: {
-    padding: 20,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  recentSearches: {
-    padding: 20,
-    paddingTop: 0,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 16,
-  },
-  topicChip: {
+  modalContent: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    width: '90%',
+    maxWidth: 400,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
-  topicText: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  quizHistory: {
-    padding: 20,
-    paddingTop: 0,
-  },
-  quizCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  quizHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  quizTopic: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
-  },
-  quizDate: {
-    fontSize: 12,
-    color: '#666',
-  },
-  quizDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  quizScore: {
-    fontSize: 14,
-    color: '#666',
-    marginRight: 8,
-  },
-  quizPercentage: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-  quizMeta: {
-    flexDirection: 'row',
+  modalHeader: {
+    padding: 30,
     alignItems: 'center',
   },
-  quizMetaText: {
-    fontSize: 12,
-    color: '#666',
+  headerIcon: {
+    marginBottom: 10,
   },
-  featuresSection: {
-    padding: 20,
-  },
-  featureGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  featureCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 12,
-    width: '47%',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginTop: 12,
-    marginBottom: 4,
+  modalTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
     textAlign: 'center',
   },
-  featureDescription: {
-    fontSize: 12,
-    color: '#666',
+  scoreContainer: {
+    padding: 30,
+    alignItems: 'center',
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#8A2BE2',
+    marginBottom: 20,
     textAlign: 'center',
+  },
+  scoreText: {
+    fontSize: 20,
+    color: '#666',
+    marginBottom: 20,
+  },
+  scoreCircle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 15,
+  },
+  scoreValue: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#8A2BE2',
+  },
+  scoreDivider: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#666',
+    marginHorizontal: 10,
+  },
+  totalQuestions: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#666',
+  },
+  percentageText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#8A2BE2',
+    marginBottom: 15,
+  },
+  messageText: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#8A2BE2',
+    marginBottom: 30,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  closeButton: {
+    backgroundColor: '#8A2BE2',
+    padding: 20,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
 

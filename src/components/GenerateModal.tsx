@@ -16,41 +16,32 @@ import { Picker } from '@react-native-picker/picker';
 const difficulties = ['Easy', 'Medium', 'Hard'];
 const questionTypes = ['Multiple Choice', 'True/False'];
 
-interface GenerateAIModalProps {
+interface GenerateModalProps {
   visible: boolean;
   onClose: () => void;
   onGenerate: (topic: string, difficulty: string, type: string) => void;
   isLoading: boolean;
 }
 
-export const GenerateAIModal: React.FC<GenerateAIModalProps> = ({ visible, onClose, onGenerate, isLoading }) => {
+export const GenerateModal: React.FC<GenerateModalProps> = ({
+  visible,
+  onClose,
+  onGenerate,
+  isLoading,
+}) => {
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState(difficulties[0]);
   const [type, setType] = useState(questionTypes[0]);
-  const [fadeAnim] = useState(new Animated.Value(0));
-
-  React.useEffect(() => {
-    if (visible) {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.ease),
-      }).start();
-    } else {
-      fadeAnim.setValue(0);
-    }
-  }, [visible]);
 
   return (
     <Modal
       visible={visible}
-      animationType="fade"
       transparent
+      animationType="fade"
       onRequestClose={onClose}
     >
-      <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}> 
-        <View style={styles.modalContent}>
+      <View style={styles.modalOverlay}>
+        <Animated.View style={styles.modalContent}>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Ionicons name="close" size={24} color="#333" />
           </TouchableOpacity>
@@ -95,14 +86,14 @@ export const GenerateAIModal: React.FC<GenerateAIModalProps> = ({ visible, onClo
           >
             <Text style={styles.generateButtonText}>{isLoading ? 'Generating...' : 'Generate'}</Text>
           </TouchableOpacity>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      </View>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
@@ -176,4 +167,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default GenerateAIModal; 
+export default GenerateModal; 
