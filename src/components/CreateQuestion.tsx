@@ -1,15 +1,14 @@
 "use client"
 
-import React from 'react'
-import { useState } from "react"
+import React, { useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, ScrollView } from "react-native"
 import type { TriviaQuestion } from "../services/triviaService"
 import QuizGame from "./QuizGame"
 import { Picker } from "@react-native-picker/picker"
 import { Ionicons } from "@expo/vector-icons"
-import { aiService } from "../services/aiService"
 import { LinearGradient } from "expo-linear-gradient"
 import { useTheme } from '../context/ThemeContext'
+import { triviaService } from "../services/triviaService"
 
 interface CreateQuestionProps {
   onQuestionAccepted: (question: TriviaQuestion) => void
@@ -40,20 +39,12 @@ const CreateQuestion: React.FC<CreateQuestionProps> = ({ onQuestionAccepted, onQ
     setError(null)
 
     try {
-      const response = await aiService.generateQuestion(topic, difficulty, type)
-      console.log("Generated question:", response)
-
-      // Transform the response to match TriviaQuestion format
-      const triviaQuestion: TriviaQuestion = {
-        category: response.category,
-        type: response.type,
-        difficulty: response.difficulty,
-        question: response.question,
-        correct_answer: response.correct_answer,
-        incorrect_answers: response.incorrect_answers
+      const response = await triviaService.getQuestions(topic, difficulty, 1)
+      if (response && response.length > 0) {
+        setQuestion(response[0])
+      } else {
+        setError("No questions found for this topic")
       }
-
-      setQuestion(triviaQuestion)
     } catch (err) {
       console.error("Error generating question:", err)
       setError(err instanceof Error ? err.message : "Failed to generate question")

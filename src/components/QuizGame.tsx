@@ -11,7 +11,7 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { getTriviaQuestions, TriviaQuestion } from '../services/triviaService';
+import { triviaService, TriviaQuestion } from '../services/triviaService';
 import { decodeHTML } from '../utils/stringUtils';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -70,15 +70,16 @@ const QuizGame: React.FC<QuizGameProps> = ({
     try {
       setLoading(true);
       setError(null);
-      const response = await getTriviaQuestions(10, undefined, difficulty, questionType);
+      const questions = await triviaService.getQuestions(topic, difficulty, 10);
       
-      if (response.results.length === 0) {
+      if (questions.length === 0) {
         setError('No questions found for the selected criteria');
         return;
       }
 
-      setQuestions(response.results);
+      setQuestions(questions);
     } catch (error) {
+      console.error('Error loading questions:', error);
       setError('Failed to load questions');
     } finally {
       setLoading(false);
