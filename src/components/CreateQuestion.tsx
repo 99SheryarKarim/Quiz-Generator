@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import React from 'react'
 import { useState } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, ScrollView } from "react-native"
 import type { TriviaQuestion } from "../services/triviaService"
@@ -9,6 +9,7 @@ import { Picker } from "@react-native-picker/picker"
 import { Ionicons } from "@expo/vector-icons"
 import { aiService } from "../services/aiService"
 import { LinearGradient } from "expo-linear-gradient"
+import { useTheme } from '../context/ThemeContext'
 
 interface CreateQuestionProps {
   onQuestionAccepted: (question: TriviaQuestion) => void
@@ -20,6 +21,7 @@ type Difficulty = "easy" | "medium" | "hard"
 type QuestionType = "multiple" | "boolean"
 
 const CreateQuestion: React.FC<CreateQuestionProps> = ({ onQuestionAccepted, onQuizComplete, onClose }) => {
+  const { isDark } = useTheme()
   const [topic, setTopic] = useState("")
   const [difficulty, setDifficulty] = useState<Difficulty>("medium")
   const [type, setType] = useState<QuestionType>("multiple")
@@ -90,49 +92,51 @@ const CreateQuestion: React.FC<CreateQuestionProps> = ({ onQuestionAccepted, onQ
 
   // Main render
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && styles.containerDark]}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Topic</Text>
+            <Text style={[styles.label, isDark && styles.textDark]}>Topic</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, isDark && styles.inputDark]}
               value={topic}
               onChangeText={(text) => {
                 setTopic(text)
                 setError(null)
               }}
               placeholder="Enter topic (e.g., History, Science)"
-              placeholderTextColor="#999"
+              placeholderTextColor={isDark ? '#666666' : '#999999'}
               autoCapitalize="words"
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Difficulty</Text>
-            <View style={styles.pickerContainer}>
+            <Text style={[styles.label, isDark && styles.textDark]}>Difficulty</Text>
+            <View style={[styles.pickerContainer, isDark && styles.pickerContainerDark]}>
               <Picker
                 selectedValue={difficulty}
                 onValueChange={(value) => setDifficulty(value as Difficulty)}
-                style={styles.picker}
+                style={[styles.picker, isDark && styles.pickerDark]}
+                dropdownIconColor={isDark ? '#FFFFFF' : '#2C3E50'}
               >
-                <Picker.Item label="Easy" value="easy" />
-                <Picker.Item label="Medium" value="medium" />
-                <Picker.Item label="Hard" value="hard" />
+                <Picker.Item label="Easy" value="easy" color={isDark ? '#FFFFFF' : '#2C3E50'} />
+                <Picker.Item label="Medium" value="medium" color={isDark ? '#FFFFFF' : '#2C3E50'} />
+                <Picker.Item label="Hard" value="hard" color={isDark ? '#FFFFFF' : '#2C3E50'} />
               </Picker>
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Question Type</Text>
-            <View style={styles.pickerContainer}>
+            <Text style={[styles.label, isDark && styles.textDark]}>Question Type</Text>
+            <View style={[styles.pickerContainer, isDark && styles.pickerContainerDark]}>
               <Picker
                 selectedValue={type}
                 onValueChange={(value) => setType(value as QuestionType)}
-                style={styles.picker}
+                style={[styles.picker, isDark && styles.pickerDark]}
+                dropdownIconColor={isDark ? '#FFFFFF' : '#2C3E50'}
               >
-                <Picker.Item label="Multiple Choice" value="multiple" />
-                <Picker.Item label="True/False" value="boolean" />
+                <Picker.Item label="Multiple Choice" value="multiple" color={isDark ? '#FFFFFF' : '#2C3E50'} />
+                <Picker.Item label="True/False" value="boolean" color={isDark ? '#FFFFFF' : '#2C3E50'} />
               </Picker>
             </View>
           </View>
@@ -162,20 +166,20 @@ const CreateQuestion: React.FC<CreateQuestionProps> = ({ onQuestionAccepted, onQ
           </TouchableOpacity>
 
           {question && (
-            <View style={styles.questionContainer}>
-              <Text style={styles.questionText}>{question.question}</Text>
+            <View style={[styles.questionContainer, isDark && styles.questionContainerDark]}>
+              <Text style={[styles.questionText, isDark && styles.textDark]}>{question.question}</Text>
               <View style={styles.optionsContainer}>
                 {[...question.incorrect_answers, question.correct_answer]
                   .sort(() => Math.random() - 0.5)
                   .map((option, index) => (
                     <TouchableOpacity
                       key={index}
-                      style={styles.optionButton}
+                      style={[styles.optionButton, isDark && styles.optionButtonDark]}
                       onPress={() => {
                         console.log("Selected option:", option)
                       }}
                     >
-                      <Text style={styles.optionText}>{option}</Text>
+                      <Text style={[styles.optionText, isDark && styles.textDark]}>{option}</Text>
                     </TouchableOpacity>
                   ))}
               </View>
@@ -209,6 +213,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
+  containerDark: {
+    backgroundColor: "#1A1A1A",
+  },
   scrollView: {
     flex: 1,
   },
@@ -224,6 +231,9 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#1A1A1A",
   },
+  textDark: {
+    color: "#FFFFFF",
+  },
   input: {
     borderWidth: 1,
     borderColor: "#E0E0E0",
@@ -231,16 +241,30 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 16,
     color: "#1A1A1A",
+    backgroundColor: "#FFFFFF",
+  },
+  inputDark: {
+    borderColor: "#333333",
+    color: "#FFFFFF",
+    backgroundColor: "#2C2C2C",
   },
   pickerContainer: {
     borderWidth: 1,
     borderColor: "#E0E0E0",
     borderRadius: 8,
     overflow: "hidden",
+    backgroundColor: "#FFFFFF",
+  },
+  pickerContainerDark: {
+    borderColor: "#333333",
+    backgroundColor: "#2C2C2C",
   },
   picker: {
     height: 50,
     color: "#1A1A1A",
+  },
+  pickerDark: {
+    color: "#FFFFFF",
   },
   errorContainer: {
     flexDirection: "row",
@@ -284,6 +308,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 20,
   },
+  questionContainerDark: {
+    backgroundColor: "#2C2C2C",
+  },
   questionText: {
     fontSize: 18,
     fontWeight: "500",
@@ -300,6 +327,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#E0E0E0",
     padding: 12,
+  },
+  optionButtonDark: {
+    backgroundColor: "#2C2C2C",
+    borderColor: "#333333",
   },
   optionText: {
     fontSize: 16,

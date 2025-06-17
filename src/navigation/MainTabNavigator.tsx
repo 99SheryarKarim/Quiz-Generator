@@ -1,15 +1,19 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+
 import HomeScreen from '../screens/HomeScreen';
-import SettingsScreen from '../screens/SettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import HistoryScreen from '../screens/HistoryScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 // Create the bottom tab navigator
 const Tab = createBottomTabNavigator();
 
 const MainTabNavigator = () => {
+  const { isDark } = useTheme();
+
   return (
     <Tab.Navigator
       // Configure the appearance and behavior of the tab bar
@@ -18,65 +22,57 @@ const MainTabNavigator = () => {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
 
-          // Set different icons for each tab
-          if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'History') {
-            iconName = focused ? 'time' : 'time-outline';
-          } else if (route.name === 'Settings') {
-            iconName = focused ? 'settings' : 'settings-outline';
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
-          } else {
-            iconName = 'help-circle-outline';
+          switch (route.name) {
+            case 'Home':
+              iconName = focused ? 'home' : 'home-outline';
+              break;
+            case 'Profile':
+              iconName = focused ? 'person' : 'person-outline';
+              break;
+            case 'History':
+              iconName = focused ? 'time' : 'time-outline';
+              break;
+            case 'Settings':
+              iconName = focused ? 'settings' : 'settings-outline';
+              break;
+            default:
+              iconName = 'help-circle';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         // Tab bar styling
-        tabBarActiveTintColor: '#007AFF',    // Color for active tab
-        tabBarInactiveTintColor: 'gray',     // Color for inactive tabs
-        headerShown: false,                  
+        tabBarActiveTintColor: '#1565C0',    // Color for active tab
+        tabBarInactiveTintColor: isDark ? '#666666' : '#999999',     // Color for inactive tabs
         tabBarStyle: {
-          borderTopWidth: 1,
-          borderTopColor: '#f0f0f0',
+          backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF',
+          borderTopColor: isDark ? '#333333' : '#E0E0E0',
+          paddingBottom: 5,
           paddingTop: 5,
-          paddingBottom: 10,
           height: 60,
         },
+        headerShown: false,
       })}
     >
       {/* Home Tab */}
       <Tab.Screen 
         name="Home" 
         component={HomeScreen}
-        options={{
-          tabBarLabel: 'Home',
-        }}
       />
       {/* History Tab */}
       <Tab.Screen 
         name="History" 
         component={HistoryScreen}
-        options={{
-          tabBarLabel: 'History',
-        }}
       />
       {/* Settings Tab */}
       <Tab.Screen 
         name="Settings" 
         component={SettingsScreen}
-        options={{
-          tabBarLabel: 'Settings',
-        }}
       />
       {/* Profile Tab */}
       <Tab.Screen 
         name="Profile" 
         component={ProfileScreen}
-        options={{
-          tabBarLabel: 'Profile',
-        }}
       />
     </Tab.Navigator>
   );

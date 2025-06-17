@@ -1,199 +1,151 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Switch,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
-export default function SettingsScreen() {
-  const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
-  const [soundEffects, setSoundEffects] = useState(true);
-  const [autoPlay, setAutoPlay] = useState(false);
+const SettingsScreen: React.FC = () => {
+  const { isDark, theme, setTheme } = useTheme();
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: () => {
-            // Handle logout logic here
-            console.log('User logged out');
-          },
-        },
-      ]
-    );
-  };
-
-  const renderSettingItem = (
-    icon: string,
-    title: string,
-    rightElement?: React.ReactNode,
-    onPress?: () => void
-  ) => (
-    <TouchableOpacity
-      style={styles.settingItem}
-      onPress={onPress}
-      disabled={!onPress}
-    >
+  const renderSettingItem = (icon: string, title: string, value?: React.ReactNode) => (
+    <View style={[styles.settingItem, isDark && styles.settingItemDark]}>
       <View style={styles.settingLeft}>
-        <Ionicons name={icon as any} size={24} color="#007AFF" />
-        <Text style={styles.settingText}>{title}</Text>
+        <Ionicons name={icon} size={24} color={isDark ? '#FFFFFF' : '#2C3E50'} />
+        <Text style={[styles.settingTitle, isDark && styles.textDark]}>{title}</Text>
       </View>
-      {rightElement || <Ionicons name="chevron-forward" size={20} color="#999" />}
-    </TouchableOpacity>
+      {value}
+    </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, isDark && styles.containerDark]}>
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, isDark && styles.textDark]}>Settings</Text>
+      </View>
+
       <ScrollView style={styles.scrollView}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
+          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Appearance</Text>
           {renderSettingItem(
-            'notifications-outline',
-            'Notifications',
-            <Switch
-              value={notifications}
-              onValueChange={setNotifications}
-              trackColor={{ false: '#E5E5EA', true: '#34C759' }}
-              thumbColor="#fff"
-            />
-          )}
-          {renderSettingItem(
-            'moon-outline',
+            'moon',
             'Dark Mode',
             <Switch
-              value={darkMode}
-              onValueChange={setDarkMode}
-              trackColor={{ false: '#E5E5EA', true: '#34C759' }}
-              thumbColor="#fff"
+              value={isDark}
+              onValueChange={() => setTheme(isDark ? 'light' : 'dark')}
+              trackColor={{ false: '#767577', true: '#81b0ff' }}
+              thumbColor={isDark ? '#1565C0' : '#f4f3f4'}
             />
           )}
           {renderSettingItem(
-            'volume-high-outline',
-            'Sound Effects',
+            'phone-portrait',
+            'Use System Theme',
             <Switch
-              value={soundEffects}
-              onValueChange={setSoundEffects}
-              trackColor={{ false: '#E5E5EA', true: '#34C759' }}
-              thumbColor="#fff"
-            />
-          )}
-          {renderSettingItem(
-            'play-outline',
-            'Auto-play Next Question',
-            <Switch
-              value={autoPlay}
-              onValueChange={setAutoPlay}
-              trackColor={{ false: '#E5E5EA', true: '#34C759' }}
-              thumbColor="#fff"
+              value={theme === 'system'}
+              onValueChange={(value) => setTheme(value ? 'system' : isDark ? 'dark' : 'light')}
+              trackColor={{ false: '#767577', true: '#81b0ff' }}
+              thumbColor={theme === 'system' ? '#1565C0' : '#f4f3f4'}
             />
           )}
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          {renderSettingItem('person-outline', 'Edit Profile')}
-          {renderSettingItem('lock-closed-outline', 'Change Password')}
-          {renderSettingItem('mail-outline', 'Email Preferences')}
+          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Notifications</Text>
+          {renderSettingItem(
+            'notifications',
+            'Push Notifications',
+            <Switch
+              value={true}
+              onValueChange={() => {}}
+              trackColor={{ false: '#767577', true: '#81b0ff' }}
+              thumbColor={true ? '#1565C0' : '#f4f3f4'}
+            />
+          )}
+          {renderSettingItem(
+            'mail',
+            'Email Notifications',
+            <Switch
+              value={false}
+              onValueChange={() => {}}
+              trackColor={{ false: '#767577', true: '#81b0ff' }}
+              thumbColor={false ? '#1565C0' : '#f4f3f4'}
+            />
+          )}
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
-          {renderSettingItem('help-circle-outline', 'Help Center')}
-          {renderSettingItem('document-text-outline', 'Terms of Service')}
-          {renderSettingItem('shield-checkmark-outline', 'Privacy Policy')}
-          {renderSettingItem('information-circle-outline', 'About')}
+          <Text style={[styles.sectionTitle, isDark && styles.textDark]}>About</Text>
+          {renderSettingItem('information-circle', 'App Version', <Text style={[styles.settingValue, isDark && styles.textDark]}>1.0.0</Text>)}
+          {renderSettingItem('help-circle', 'Help & Support')}
+          {renderSettingItem('document-text', 'Terms of Service')}
+          {renderSettingItem('shield-checkmark', 'Privacy Policy')}
         </View>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.version}>Version 1.0.0</Text>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8F9FA',
+  },
+  containerDark: {
+    backgroundColor: '#1A1A1A',
+  },
+  header: {
+    padding: 20,
+    paddingTop: 40,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2C3E50',
   },
   scrollView: {
     flex: 1,
+    padding: 15,
   },
   section: {
-    padding: 20,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginLeft: 15,
+    marginBottom: 10,
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: 15,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  settingItemDark: {
+    backgroundColor: '#2C2C2C',
+    borderBottomColor: '#404040',
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  settingText: {
+  settingTitle: {
     fontSize: 16,
-    color: '#1a1a1a',
-    marginLeft: 16,
+    color: '#2C3E50',
+    marginLeft: 15,
   },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    margin: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  logoutText: {
+  settingValue: {
     fontSize: 16,
-    color: '#FF3B30',
-    fontWeight: '600',
-    marginLeft: 8,
+    color: '#7F8C8D',
   },
-  version: {
-    textAlign: 'center',
-    color: '#999',
-    fontSize: 14,
-    marginBottom: 20,
+  textDark: {
+    color: '#FFFFFF',
   },
-}); 
+});
+
+export default SettingsScreen; 

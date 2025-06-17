@@ -16,10 +16,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { TriviaQuestion } from '../services/triviaService';
 import { QuizHistory } from '../types/quiz';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 const HomeScreen: React.FC = () => {
+  const { isDark } = useTheme();
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [quizHistory, setQuizHistory] = useState<QuizHistory[]>([]);
   const [showScoreModal, setShowScoreModal] = useState(false);
@@ -103,6 +105,7 @@ const HomeScreen: React.FC = () => {
       <Animated.View
         style={[
           styles.featureCard,
+          isDark && styles.featureCardDark,
           {
             transform: [{ translateY }],
             opacity,
@@ -110,12 +113,12 @@ const HomeScreen: React.FC = () => {
         ]}
       >
         <View style={styles.featureContent}>
-          <View style={styles.featureIconContainer}>
+          <View style={[styles.featureIconContainer, isDark && styles.featureIconContainerDark]}>
             <Ionicons name={icon} size={24} color="#FFFFFF" />
           </View>
           <View style={styles.featureTextContainer}>
-            <Text style={styles.featureTitle}>{title}</Text>
-            <Text style={styles.featureDescription}>{description}</Text>
+            <Text style={[styles.featureTitle, isDark && styles.featureTitleDark]}>{title}</Text>
+            <Text style={[styles.featureDescription, isDark && styles.featureDescriptionDark]}>{description}</Text>
           </View>
         </View>
       </Animated.View>
@@ -216,7 +219,7 @@ const HomeScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, isDark && styles.containerDark]}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <LinearGradient
@@ -257,7 +260,10 @@ const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ECF0F1',
+    backgroundColor: '#F8F9FA',
+  },
+  containerDark: {
+    backgroundColor: '#1A1A1A',
   },
   scrollView: {
     flex: 1,
@@ -314,6 +320,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     backgroundColor: '#FFFFFF',
   },
+  featureCardDark: {
+    backgroundColor: '#2C2C2C',
+  },
   featureContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -328,6 +337,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
+  featureIconContainerDark: {
+    backgroundColor: '#1565C0',
+  },
   featureTextContainer: {
     flex: 1,
   },
@@ -337,10 +349,16 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
     marginBottom: 4,
   },
+  featureTitleDark: {
+    color: '#FFFFFF',
+  },
   featureDescription: {
     fontSize: 12,
     color: '#7F8C8D',
     lineHeight: 16,
+  },
+  featureDescriptionDark: {
+    color: '#B0BEC5',
   },
   modalOverlay: {
     flex: 1,
