@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Platform,
   Modal,
   Animated,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CreateQuestion from '../components/CreateQuestion';
@@ -16,6 +17,8 @@ import { TriviaQuestion } from '../services/triviaService';
 import { QuizHistory } from '../types/quiz';
 import { LinearGradient } from 'expo-linear-gradient';
 
+const { width } = Dimensions.get('window');
+
 const HomeScreen: React.FC = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [quizHistory, setQuizHistory] = useState<QuizHistory[]>([]);
@@ -23,6 +26,20 @@ const HomeScreen: React.FC = () => {
   const [lastQuizScore, setLastQuizScore] = useState<QuizHistory | null>(null);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [scaleAnim] = useState(new Animated.Value(0.8));
+  const [slideAnim] = useState(new Animated.Value(50));
+  const [rotateAnim] = useState(new Animated.Value(0));
+
+  // Feature cards animation
+  const [featureCardsAnim] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    // Animate feature cards on mount
+    Animated.timing(featureCardsAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   const handleQuestionAccepted = (question: TriviaQuestion) => {
     const topic = question.category;
@@ -45,11 +62,11 @@ const HomeScreen: React.FC = () => {
     setLastQuizScore(newQuizHistory);
     setShowScoreModal(true);
 
-    // Start animations
+    // Enhanced animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 500,
+        duration: 800,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnim, {
@@ -57,8 +74,52 @@ const HomeScreen: React.FC = () => {
         friction: 8,
         tension: 40,
         useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
       })
     ]).start();
+  };
+
+  const renderFeatureCard = (icon: string, title: string, description: string, index: number) => {
+    const translateY = featureCardsAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [50, 0]
+    });
+
+    const opacity = featureCardsAnim.interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0, 0.5, 1]
+    });
+
+    return (
+      <Animated.View
+        style={[
+          styles.featureCard,
+          {
+            transform: [{ translateY }],
+            opacity,
+          }
+        ]}
+      >
+        <View style={styles.featureContent}>
+          <View style={styles.featureIconContainer}>
+            <Ionicons name={icon} size={24} color="#FFFFFF" />
+          </View>
+          <View style={styles.featureTextContainer}>
+            <Text style={styles.featureTitle}>{title}</Text>
+            <Text style={styles.featureDescription}>{description}</Text>
+          </View>
+        </View>
+      </Animated.View>
+    );
   };
 
   const renderScoreModal = () => {
@@ -67,17 +128,26 @@ const HomeScreen: React.FC = () => {
     const percentage = Math.round((lastQuizScore.score / lastQuizScore.totalQuestions) * 100);
     let message = '';
     let icon = '';
+    let gradientColors = ['#2C3E50', '#34495E'];
 
     if (percentage >= 80) {
       message = 'Outstanding Performance!';
       icon = 'trophy';
+      gradientColors = ['#2980B9', '#3498DB'];
     } else if (percentage >= 60) {
       message = 'Great Job!';
       icon = 'star';
+      gradientColors = ['#16A085', '#1ABC9C'];
     } else {
       message = 'Keep Practicing!';
       icon = 'school';
+      gradientColors = ['#2C3E50', '#34495E'];
     }
+
+    const rotate = rotateAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '360deg']
+    });
 
     return (
       <Modal
@@ -92,15 +162,21 @@ const HomeScreen: React.FC = () => {
               styles.modalContent,
               { 
                 opacity: fadeAnim,
-                transform: [{ scale: scaleAnim }]
+                transform: [
+                  { scale: scaleAnim },
+                  { translateY: slideAnim },
+                  { rotate }
+                ]
               }
             ]}
           >
             <LinearGradient
-              colors={['#8A2BE2', '#4B0082']}
+              colors={gradientColors}
               style={styles.modalHeader}
             >
-              <Ionicons name={icon} size={60} color="#FFFFFF" style={styles.headerIcon} />
+              <Animated.View style={{ transform: [{ rotate }] }}>
+                <Ionicons name={icon} size={60} color="#FFFFFF" style={styles.headerIcon} />
+              </Animated.View>
               <Text style={styles.modalTitle}>Quiz Complete!</Text>
             </LinearGradient>
             
@@ -117,11 +193,11 @@ const HomeScreen: React.FC = () => {
               
               <View style={styles.statsContainer}>
                 <View style={styles.statItem}>
-                  <Ionicons name="checkmark-circle" size={24} color="#8A2BE2" />
+                  <Ionicons name="checkmark-circle" size={24} color="#2980B9" />
                   <Text style={styles.statText}>Correct: {lastQuizScore.score}</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Ionicons name="close-circle" size={24} color="#8A2BE2" />
+                  <Ionicons name="close-circle" size={24} color="#2980B9" />
                   <Text style={styles.statText}>Incorrect: {lastQuizScore.totalQuestions - lastQuizScore.score}</Text>
                 </View>
               </View>
@@ -144,12 +220,26 @@ const HomeScreen: React.FC = () => {
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
           <LinearGradient
-            colors={['#8A2BE2', '#4B0082']}
+            colors={['#0D47A1', '#1565C0']}
             style={styles.headerGradient}
           >
-            <Text style={styles.headerTitle}>Quiz Generator</Text>
-            <Text style={styles.headerSubtitle}>Test your knowledge!</Text>
+            <View style={styles.headerContent}>
+              <Ionicons name="school" size={32} color="#FFFFFF" style={styles.headerIcon} />
+              <View style={styles.headerTextContainer}>
+                <Text style={styles.headerTitle}>Thadda Quiz Generator</Text>
+                <Text style={styles.headerSubtitle}>Test your knowledge!</Text>
+              </View>
+            </View>
           </LinearGradient>
+        </View>
+
+        <View style={styles.featuresGrid}>
+          {renderFeatureCard('time', '24/7 Support', 'Get help anytime, anywhere', 0)}
+          {renderFeatureCard('people', 'Live Quizzes', 'Compete with players worldwide', 1)}
+          {renderFeatureCard('trophy', 'Daily Challenges', 'New questions every day', 2)}
+          {renderFeatureCard('stats-chart', 'Progress Tracking', 'Monitor your improvement', 3)}
+          {renderFeatureCard('globe', 'Global Rankings', 'Compete on the leaderboard', 4)}
+          {renderFeatureCard('gift', 'Rewards', 'Earn points and unlock achievements', 5)}
         </View>
 
         <CreateQuestion
@@ -167,7 +257,7 @@ const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#ECF0F1',
   },
   scrollView: {
     flex: 1,
@@ -178,121 +268,179 @@ const styles = StyleSheet.create({
   headerGradient: {
     padding: 20,
     paddingTop: Platform.OS === 'ios' ? 40 : 20,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerIcon: {
+    marginRight: 12,
+  },
+  headerTextContainer: {
+    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   headerSubtitle: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#FFFFFF',
     textAlign: 'center',
-    marginTop: 5,
+    marginTop: 4,
+    opacity: 0.9,
+  },
+  featuresGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 15,
+    justifyContent: 'space-between',
+  },
+  featureCard: {
+    width: width / 2 - 20,
+    marginBottom: 15,
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    backgroundColor: '#FFFFFF',
+  },
+  featureContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+  },
+  featureIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2C3E50',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  featureTextContainer: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 4,
+  },
+  featureDescription: {
+    fontSize: 12,
+    color: '#7F8C8D',
+    lineHeight: 16,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 25,
     width: '90%',
     maxWidth: 400,
     overflow: 'hidden',
-    elevation: 5,
+    elevation: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
   },
   modalHeader: {
-    padding: 30,
+    padding: 35,
     alignItems: 'center',
   },
-  headerIcon: {
-    marginBottom: 10,
-  },
   modalTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
     textAlign: 'center',
   },
   scoreContainer: {
-    padding: 30,
+    padding: 35,
     alignItems: 'center',
   },
   welcomeText: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    color: '#8A2BE2',
+    color: '#2C3E50',
     marginBottom: 20,
     textAlign: 'center',
   },
   scoreText: {
     fontSize: 20,
-    color: '#666',
+    color: '#7F8C8D',
     marginBottom: 20,
   },
   scoreCircle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
   },
   scoreValue: {
-    fontSize: 48,
+    fontSize: 52,
     fontWeight: 'bold',
-    color: '#8A2BE2',
+    color: '#2980B9',
   },
   scoreDivider: {
-    fontSize: 48,
+    fontSize: 52,
     fontWeight: 'bold',
-    color: '#666',
+    color: '#7F8C8D',
     marginHorizontal: 10,
   },
   totalQuestions: {
-    fontSize: 48,
+    fontSize: 52,
     fontWeight: 'bold',
-    color: '#666',
+    color: '#7F8C8D',
   },
   percentageText: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
-    color: '#8A2BE2',
-    marginBottom: 15,
+    color: '#2980B9',
+    marginBottom: 20,
   },
   messageText: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '600',
-    color: '#8A2BE2',
-    marginBottom: 30,
+    color: '#2C3E50',
+    marginBottom: 35,
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    marginTop: 20,
-    paddingTop: 20,
+    marginTop: 25,
+    paddingTop: 25,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#BDC3C7',
   },
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   statText: {
     fontSize: 16,
-    color: '#666',
+    color: '#7F8C8D',
   },
   closeButton: {
-    backgroundColor: '#8A2BE2',
-    padding: 20,
+    backgroundColor: '#2C3E50',
+    padding: 22,
     alignItems: 'center',
   },
   closeButtonText: {
