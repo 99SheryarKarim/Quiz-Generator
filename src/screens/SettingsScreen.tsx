@@ -2,8 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const SettingsScreen: React.FC = () => {
+const SettingsScreen = () => {
   const { isDark, theme, setTheme } = useTheme();
 
   const renderSettingItem = (icon: string, title: string, value?: React.ReactNode) => (
@@ -17,12 +18,8 @@ const SettingsScreen: React.FC = () => {
   );
 
   return (
-    <View style={[styles.container, isDark && styles.containerDark]}>
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, isDark && styles.textDark]}>Settings</Text>
-      </View>
-
-      <ScrollView style={styles.scrollView}>
+    <SafeAreaView style={[styles.container, isDark && styles.containerDark]} edges={['top']}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, isDark && styles.textDark]}>Appearance</Text>
           {renderSettingItem(
@@ -79,7 +76,7 @@ const SettingsScreen: React.FC = () => {
           {renderSettingItem('shield-checkmark', 'Privacy Policy')}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -91,20 +88,10 @@ const styles = StyleSheet.create({
   containerDark: {
     backgroundColor: '#1A1A1A',
   },
-  header: {
-    padding: 20,
-    paddingTop: 40,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-  },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 15,
   },
   section: {
@@ -128,7 +115,7 @@ const styles = StyleSheet.create({
   },
   settingItemDark: {
     backgroundColor: '#2C2C2C',
-    borderBottomColor: '#404040',
+    borderBottomColor: '#333333',
   },
   settingLeft: {
     flexDirection: 'row',

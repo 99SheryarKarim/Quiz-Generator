@@ -2,35 +2,36 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const HistoryScreen: React.FC = () => {
+const HistoryScreen = () => {
   const { isDark } = useTheme();
 
-  const mockHistory = [
+  const history = [
     {
       id: '1',
-      date: '2024-03-20',
+      date: '2024-03-15',
       topic: 'Science',
       score: 8,
       totalQuestions: 10,
     },
     {
       id: '2',
-      date: '2024-03-19',
+      date: '2024-03-14',
       topic: 'History',
       score: 7,
       totalQuestions: 10,
     },
     {
       id: '3',
-      date: '2024-03-18',
+      date: '2024-03-13',
       topic: 'Geography',
       score: 9,
       totalQuestions: 10,
     },
   ];
 
-  const renderHistoryItem = (item: typeof mockHistory[0]) => (
+  const renderHistoryItem = (item: typeof history[0]) => (
     <TouchableOpacity
       key={item.id}
       style={[styles.historyItem, isDark && styles.historyItemDark]}
@@ -40,27 +41,22 @@ const HistoryScreen: React.FC = () => {
         <Text style={[styles.date, isDark && styles.textDark]}>{item.date}</Text>
       </View>
       <View style={styles.scoreContainer}>
-        <Ionicons 
-          name="trophy" 
-          size={24} 
-          color={isDark ? '#1565C0' : '#2C3E50'} 
-        />
         <Text style={[styles.score, isDark && styles.textDark]}>
-          {item.score}/{item.totalQuestions}
+          Score: {item.score}/{item.totalQuestions}
+        </Text>
+        <Text style={[styles.percentage, isDark && styles.textDark]}>
+          {Math.round((item.score / item.totalQuestions) * 100)}%
         </Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <View style={[styles.container, isDark && styles.containerDark]}>
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, isDark && styles.textDark]}>Quiz History</Text>
-      </View>
-      <ScrollView style={styles.scrollView}>
-        {mockHistory.map(renderHistoryItem)}
+    <SafeAreaView style={[styles.container, isDark && styles.containerDark]} edges={['top']}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {history.map(renderHistoryItem)}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -72,20 +68,10 @@ const styles = StyleSheet.create({
   containerDark: {
     backgroundColor: '#1A1A1A',
   },
-  header: {
-    padding: 20,
-    paddingTop: 40,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-  },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 15,
   },
   historyItem: {
@@ -93,14 +79,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   historyItemDark: {
     backgroundColor: '#2C2C2C',
+    borderColor: '#333333',
   },
   historyHeader: {
     flexDirection: 'row',
@@ -119,13 +103,17 @@ const styles = StyleSheet.create({
   },
   scoreContainer: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 10,
   },
   score: {
     fontSize: 16,
-    fontWeight: '500',
     color: '#2C3E50',
+  },
+  percentage: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4A90E2',
   },
   textDark: {
     color: '#FFFFFF',

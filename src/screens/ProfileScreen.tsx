@@ -15,8 +15,8 @@ import { useTheme } from '../context/ThemeContext';
 
 // Mock user data
 const userData = {
-  name: 'John Doe',
-  email: 'john.doe@example.com',
+  name: 'Sheryar karim',
+  email: 'shedymelvin777@gmail.com',
   quizzesCreated: 15,
   quizzesPlayed: 42,
   averageScore: 85,
